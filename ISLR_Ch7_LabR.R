@@ -510,32 +510,74 @@ summary(gam.col1)
 #Variable 'Expend' showes non-linear relation to 'Outstate'
 
 #11. In Section 7.7, it was mentioned that GAMs are generally fit using a backfitting approach. The idea behind backfitting is actually quite simple. We will now explore backfitting in the context of multiple linear regression.
-#Suppose that we would like to perform multiple linear regression, but we do not have software to do so. Instead, we only have software to perform simple linear regression. Therefore, we take the following iterative approach: we repeatedly hold all but one coefficient estimate fixed at its current value, and update only that coefficient estimate using a simple linear regression. The process is continued until convergence???that is, until the coefficient estimates stop changing. We now try this out on a toy example.
+#Suppose that we would like to perform multiple linear regression, but we do not have software to do so. Instead, we only have software to perform simple linear regression. Therefore, we take the following iterative approach: we repeatedly hold all but one coefficient estimate fixed at its current value, and update only that coefficient estimate using a simple linear regression. The process is continued until convergence b that is, until the coefficient estimates stop changing. We now try this out on a toy example.
 #a Generate a response Y and two predictors X1 and X2, with n = 100.
+n <- 100
+set.seed(1)
+X1 <- rnorm(n, mean=5, sd=2)
+X2 <- rnorm(n, mean=3, sd=4)
+e <- rnorm(n, mean=6, sd=7)
+b0_set <- 2
+b1_set <- 23
+b2_set <- -1
+Y <- b1_set*X1 + b2_set*X2 + b0_set + e
 
-X1 <- rnorm(100, mean=5, sd=2)
-X2 <- rnorm(100, mean=3, sd=4)
-Y <- 0.2*X1^2 -12*X2
+#b Initialize b1 to take on a value of your choice. It does not matter what value you choose.
+b1 <- 50
+#c Keeping b1 fixed, fit the model Y - b1X1 = b0 + b2X2 + e.
+a=Y-b1*X1
+b2=lm(a~X2)$coef[2]
+b0=lm(a~X2)$coef[1]
+print(b1)
+print(b0)
+#d Keeping b2 fixed, fit the model Y - b2X2 = b0 + b1X1 + e.
+a=Y-b2*X2
+b1=lm(a~X1)$coef[2]
+b0=lm(a~X1)$coef[1]
 
-#b Initialize ????1 to take on a value of your choice. It does not matter what value you choose.
-b1 <- rnorm(1, mean=4, sd=1)
+#e Write a for loop to repeat (c) and (d) 1,000 times. Report the estimates of b0, b1, and b2 at each iteration of the for loop.
+#Create a plot in which each of these values is displayed, with b0, b1, and b2 each shown in a different color.
+est <- matrix(NA, nrow=1000, ncol=3, dimnames=list(paste(1:1000), c('b0_est', 'b1_est', 'b2_est')))
+b1_init <- 200
+b2_init <- 'NA'
+b0_init <- 'NA'
 
-#Keeping ????1 fixed, fit the model
-Y ??? ?? ??1X1 = ??0 + ??2X2 + .
-You can do this as follows:
-  > a=y-beta1 *x1
-> beta2=lm(a???x2)$coef [2]
+for (i in 1:1000) {
+  a=Y-b1_init*X1
+  b2_init=lm(a~X2)$coef[2]
+  a=Y-b2_init*X2
+  b1_init=lm(a~X1)$coef[2]
+  b0_init=lm(a~X1)$coef[1]
+  est[i, 'b0_est'] <- b0_init
+  est[i, 'b1_est'] <- b1_init
+  est[i, 'b2_est'] <- b2_init
+}
+est[1:10, ]
 
+par(mfrow=c(1,1))
+plot(seq(1:1000), est[, 'b0_est'], ylim=range(est), xlab='Iteration', ylab='Coefficient Estimate', type='l', col='blue')
+lines(est[, 'b1_est'], type='l', col='red')
+lines(est[, 'b2_est'], type='l', col='green')
 
+plot(seq(1:3), est[1:3, 'b0_est'], ylim=range(est), xlab='Iteration', ylab='Coefficient Estimate', type='l', col='blue')
+lines(est[1:3, 'b1_est'], type='l', col='red')
+lines(est[1:3, 'b2_est'], type='l', col='green')
+#Two iterations was enough to converge coefficients, using 1:1000 plot cant see it, plot 1:3 iterations instead
 
+#f Compare your answer in (e) to the results of simply performing multiple linear regression to predict Y using X1 and X2. Use the abline() function to overlay those multiple linear regression coefficient estimates on the plot obtained in (e).
+XY <- data.frame(cbind(Y, X1, X2))
+dim(XY)
+fit <- lm(Y~., data=XY)
+b0_lm <- coef(summary(fit))[1, 1]
+b1_lm <- coef(summary(fit))[2, 1]
+b2_lm <- coef(summary(fit))[3, 1]
 
+abline(h=b0_lm, col='blue')
+abline(h=b1_lm, col='red')
+abline(h=b2_lm, col='green')
 
+#g On this data set, how many backfitting iterations were required in order to obtain a ???good??? approximation to the multiple regression coefficient estimates?
+#Just 1 iteration
 
-
-
-
-
-
-
-
+#12. This problem is a continuation of the previous exercise. In a toy example with p = 100, show that one can approximate the multiple linear regression coefficient estimates by repeatedly performing simple linear regression in a backfitting procedure. How many backfitting iterations are required in order to obtain a ???good??? approximation to the multiple regression coefficient estimates? Create a plot to justify your answer.
 
